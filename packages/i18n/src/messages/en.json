@@ -1,0 +1,27 @@
+{
+  "common": {
+    "appName": "Hazir",
+    "language": "Language",
+    "loading": "Loading",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "designSheet": {
+    "title": "Component sheet",
+    "intro": "Every component in its real states. Reviewed before any screen is built with it.",
+    "buttons": "Buttons",
+    "primary": "Add to order",
+    "secondary": "View menu",
+    "disabled": "Unavailable",
+    "states": "States",
+    "empty": "No items in this category yet.",
+    "error": "We could not load the menu. Check your connection and try again.",
+    "offline": "You are offline. Orders will resume when the connection returns.",
+    "soldOut": "Sold out",
+    "price": "Price",
+    "fieldLabel": "Item name",
+    "fieldHelp": "Shown to customers on the menu.",
+    "fieldError": "Enter a name for this item."
+  }
+}

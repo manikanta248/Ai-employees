@@ -1,0 +1,108 @@
+/* Component styles. Every value comes from a token in tokens.css. */
+.hz-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target);
+  min-width: var(--tap-target);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease);
+}
+.hz-button--primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.hz-button--primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+.hz-button--secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+.hz-button--secondary:hover:not(:disabled) {
+  border-color: var(--color-text);
+}
+.hz-button:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+.hz-button:focus-visible,
+.hz-field__input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.hz-field {
+  display: grid;
+  gap: var(--space-1);
+}
+.hz-field__label {
+  font-weight: 600;
+}
+.hz-field__input {
+  min-height: var(--tap-target);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+.hz-field__input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+.hz-field__help {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.hz-field__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.hz-notice {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  display: grid;
+  gap: var(--space-2);
+}
+.hz-notice--error {
+  border-color: var(--color-danger);
+}
+.hz-notice--warning {
+  border-color: var(--color-warning);
+}
+.hz-notice__title,
+.hz-notice__body {
+  margin: 0;
+}
+.hz-notice__title {
+  font-weight: 700;
+}
+
+.hz-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}

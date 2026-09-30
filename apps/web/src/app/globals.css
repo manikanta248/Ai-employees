@@ -1,0 +1,88 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  /* Self-hosted so Hindi and Telugu render identically on every device. Each font file is
+     only downloaded when a page actually contains characters from its script. */
+  font-family:
+    'Inter Variable',
+    'Noto Sans Devanagari Variable',
+    'Noto Sans Telugu Variable',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+/* Devanagari and Telugu have taller glyphs and stacked marks; give them room. */
+:lang(hi) body,
+:lang(te) body {
+  line-height: var(--leading-relaxed);
+}
+h1,
+h2 {
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+a {
+  color: var(--color-accent);
+}
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-16);
+  display: grid;
+  gap: var(--space-8);
+}
+.stack {
+  display: grid;
+  gap: var(--space-4);
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.lang-nav {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.lang-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 600;
+}
+.lang-nav a[aria-current='page'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+.price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* An explicit theme wrapper must re-apply background AND text colour, because both are
+   inherited from the page-level values otherwise. */
+[data-theme] {
+  background: var(--color-bg);
+  color: var(--color-text);
+}

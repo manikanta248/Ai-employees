@@ -1,0 +1,32 @@
+{
+  "name": "hazir",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r --if-present typecheck && tsc -p e2e/tsconfig.json",
+    "test": "pnpm -r --if-present test",
+    "test:db": "pnpm --filter @hazir/db test",
+    "build": "pnpm --filter @hazir/web build",
+    "e2e": "playwright test",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "16.3.7",
+    "eslint-config-prettier": "^10.0.0",
+    "@playwright/test": "1.63.0",
+    "@axe-core/playwright": "4.13.0",
+    "prettier": "3.9.9",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.0",
+    "globals": "^16.0.0",
+    "@types/node": "^22.0.0"
+  }
+}
