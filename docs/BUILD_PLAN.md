@@ -13,7 +13,7 @@ This document is the plan only. No code is written until this plan is agreed. Ph
 1. **One phase at a time.** A phase ends only when every item in its exit checklist passes and you have signed off after your own manual test. No phase starts early.
 2. **Every phase ships a working slice.** Nothing is "half built, finished later".
 3. **The core path never depends on AI.** Browse, add to cart, pay and kitchen receipt work with the AI switched off. AI is an assist layer.
-4. **Boring technology for the money and the data.** Postgres, standard auth, no payment gateway (restaurants collect their own money). Novelty goes only where it earns its keep (menu extraction, order assist).
+4. **Boring technology for the money and the data.** Postgres, standard auth, Razorpay Route so restaurants receive their own money. Novelty goes only where it earns its keep (menu extraction, order assist).
 5. **Decisions are written down** in `docs/adr/` (one short file per decision), so we don't re-litigate them.
 6. **No placeholder anything in shipped UI.** No lorem ipsum, stock filler, fake testimonials or dead buttons. If a feature isn't built, it isn't shown.
 
@@ -53,7 +53,7 @@ A **modular monolith**, not microservices. One deployable backend with strict mo
 | Realtime | Postgres changes / Supabase Realtime, with polling fallback | Kitchen screen must never go silently stale |
 | Jobs | pg-boss (queue in Postgres) | Retries, idempotency, no extra infrastructure |
 | Cache / edge | Cloudflare (CDN for menus, WAF, rate limits) | Menus are read-heavy and cacheable |
-| Payments | No gateway. Restaurant's own UPI ID (Hazir generates the amount-filled UPI link/QR), plus cash and card at counter, confirmed by staff | Decided by you. Hazir never holds or moves money (see 2.6) |
+| Payments | Razorpay Route (each restaurant is a linked account, settles to them), plus cash/card at counter and an optional manual UPI fallback | Decided by you. Hazir never holds restaurant money (see 2.6) |
 | AI | Model behind our own gateway layer (see 2.5) | Swappable, capped, logged |
 | Observability | Sentry (errors), PostHog (product), structured logs, uptime probes | |
 | CI/CD | GitHub Actions, preview deploys per PR, staged rollout | |
@@ -68,7 +68,7 @@ Decided: Supabase. Domain logic stays in our own packages so we can move off lat
 - Per-tenant config (tax, service charge, hours, discount limits, AI limits) in typed tables, not free JSON blobs.
 
 ### 2.4 Core data model (first draft)
-`restaurants`, `outlets`, `staff_members`, `menu_categories`, `menu_items`, `modifier_groups`, `modifiers`, `tables`, `table_sessions`, `carts`, `orders`, `order_items`, `order_events` (append-only status history), `payment_settings` (UPI ID, payee name, methods, mode), `payments` (method, state, confirmed_by, confirmed_at), `payment_adjustments` (manual refunds/cancellations with reason), `cashup_days`, `sold_out_flags`, `audit_log`, `ai_sessions`, `ai_tool_calls`, `usage_metering`.
+`restaurants`, `outlets`, `staff_members`, `menu_categories`, `menu_items`, `modifier_groups`, `modifiers`, `tables`, `table_sessions`, `carts`, `orders`, `order_items`, `order_events` (append-only status history), `payment_settings` (methods on/off, Razorpay linked-account id and KYC status, optional manual UPI ID, pay-first vs prepare-first mode), `payments` (provider, method, state, provider ids, confirmed_by, confirmed_at), `webhook_events` (raw, unique event id, for replay), `refunds` and `payment_adjustments` (reason, actor), `reconciliation_runs`, `cashup_days`, `sold_out_flags`, `audit_log`, `ai_sessions`, `ai_tool_calls`, `usage_metering`.
 
 Rules:
 - **Money is integer paise**, never floats. One currency helper, used everywhere.
@@ -85,25 +85,24 @@ Rules:
 - Everything is logged (input, tool calls, output, cost) so wrong behaviour can be replayed and turned into a regression test.
 - Model choice is decided by an evaluation set (Section 5.5), not by preference.
 
-### 2.6 Payments (decided: no payment gateway)
-**Hazir never touches money.** Restaurants collect payment themselves, and Hazir records it. This removes gateway fees, KYC and webhook risk, and it means nothing can be paid to the wrong party through us. The trade-off is that payment is confirmed by a human, not by a bank callback, so the design has to make that safe and quick.
+### 2.6 Payments (decided: Razorpay Route, plus counter payments)
+**Hazir never holds restaurant money.** Online payments go through **Razorpay Route**: each restaurant is a linked account, and a customer's payment settles to that restaurant's own bank account. Hazir only records and displays payment state.
 
 Payment methods per restaurant (owner turns each on or off):
-1. **UPI, restaurant's own account.** The owner enters their UPI ID (VPA) and payee name, and can optionally upload their existing QR image for display. For a payable amount, Hazir builds a UPI payment link and a QR from the VPA with the order amount and order reference filled in (`upi://pay?pa=…&pn=…&am=…&tn=…`). A static uploaded QR can't carry the amount, so the customer would have to type it, which causes wrong-amount payments. The uploaded image is a fallback, not the primary path.
-2. **Pay at counter: cash.** The order goes to the kitchen and the cashier marks it paid.
+1. **Pay online (Razorpay):** UPI, cards and other methods Razorpay offers, settling to the restaurant's linked account. Available once that restaurant's Razorpay linked-account KYC is approved.
+2. **Pay at counter: cash.** Order goes to the kitchen, the cashier marks it paid.
 3. **Pay at counter: card/POS machine.** Same flow, using the restaurant's own machine.
+4. **Manual UPI (fallback, optional):** the restaurant's own UPI ID with an amount-filled UPI link/QR, confirmed by staff. It exists for restaurants still waiting for KYC approval, and it can be removed later.
 
-Payment state (separate from order state): `unpaid → customer_marked_paid → staff_confirmed`, or `pay_at_counter → staff_confirmed`, or `cancelled`. Only a staff member can set `staff_confirmed`.
-
-Rules that make manual confirmation safe:
-- The customer's "I've paid" tap only **flags** the order. The staff screen shows the amount and reference so they can match it against their bank/UPI app.
-- Orders can go to the kitchen before payment is confirmed if the owner chooses "prepare first" mode, or only after confirmation in "pay first" mode. It's a per-restaurant setting, with clear defaults.
-- Every confirmation and every un-confirmation is written to the audit log with who and when.
-- End-of-day **cash-up screen**: totals by method (UPI, cash, card) that the owner can match against their real receipts. Unconfirmed orders are listed so none silently slip through.
-- Refunds and cancellations after payment are recorded as manual entries by staff (Hazir does not move money) with a required reason.
-- Tested cases: double tap on "I've paid", customer closes the browser mid-payment, staff confirms twice, staff confirms the wrong order, amount changes after items are added, order cancelled after payment marked, UPI ID entered wrongly (validated format and a "send ₹1 test" tip in onboarding).
-- Known limit, stated plainly to owners: a customer can tap "I've paid" without paying. The design prevents loss through the staff-confirmation step. It doesn't prevent it by magic.
-- If a payment gateway or automatic UPI confirmation is added later, it becomes a new module behind the same payment-state interface. It needs no rework of orders.
+Design rules:
+- All providers sit behind one `PaymentProvider` interface and one payment state model: `unpaid → pending → paid`, or `pay_at_counter → paid`, or `failed`, `cancelled`, `refunded`, `partially_refunded`. Razorpay is one implementation, and manual/counter payment is another.
+- **Online orders are confirmed only from a verified, signed Razorpay webhook**, never from the browser redirect or client callback. The client callback only updates the screen.
+- Webhooks: signature verified, stored raw in `webhook_events`, processed idempotently (event id is unique), replayable. A **daily reconciliation job** compares our payment records with Razorpay's and flags any mismatch. Orders are created with server-side Razorpay order ids and amounts. The client never sends an amount we trust.
+- Handled and tested cases: double tap on pay, payment succeeds but the browser closes, webhook arrives late, webhook arrives twice or out of order, payment fails after the order screen, customer pays after the order expired, partial refund, full refund, Razorpay outage (customer is offered counter payment), amount changed after items added.
+- For counter and manual UPI payments, staff confirmation is required, written to the audit log, and shown on the end-of-day **cash-up screen** (totals by method, list of unconfirmed orders).
+- Refunds: online refunds are issued through Razorpay by an owner/manager (permission-gated, reason required, audit logged). Cash/card refunds are recorded manually.
+- Keys and secrets are stored server-side only. The webhook secret and API keys are never sent to the browser or committed.
+- **Things to confirm with Razorpay before Phase 4 starts (I can't verify these from here):** that Hazir qualifies for Route as a platform, the linked-account onboarding and KYC steps for a small cafe, any fee on Route transfers on top of the payment fees, settlement timing, and how refunds and disputes are handled for linked accounts. Test mode should let us build without any of this, but the answers decide whether the production setup works.
 
 ### 2.7 Reliability
 - Stateless app servers, horizontally scaled behind the CDN. Database: connection pooling, read replica for reporting, PITR backups, and a restore drill (a backup that hasn't been restored isn't a backup).
@@ -153,7 +152,7 @@ The interface is a tool that staff use for hours under pressure and customers us
 /load                k6 load scripts
 ```
 
-- TypeScript `strict`, no `any` without a comment. Zod schemas at every boundary (HTTP, AI tool I/O).
+- TypeScript `strict`, no `any` without a comment. Zod schemas at every boundary (HTTP, webhook, AI tool I/O).
 - Migrations are forward-only, reviewed, and tested against a copy of staging.
 - Conventional commits, small PRs, required checks before merge, no direct pushes to `main`.
 - Feature flags for anything not yet safe to expose.
@@ -170,7 +169,7 @@ The interface is a tool that staff use for hours under pressure and customers us
 | Property-based | fast-check | Money rounding, cart totals, state transitions |
 | Database | pgTAP or integration tests | RLS policies, constraints, migrations |
 | API/integration | Vitest + test DB | Every endpoint, including auth and tenant isolation |
-| Contract | Zod schemas / OpenAPI checks | AI tool I/O and public API responses |
+| Contract | Zod schemas / OpenAPI checks | Razorpay webhooks, AI tool I/O and public API responses |
 | E2E | Playwright | Full customer order, kitchen flow, owner flow on mobile viewports |
 | Visual regression | Storybook + snapshots | Design system |
 | Accessibility | axe in CI | Every page |
@@ -179,7 +178,7 @@ The interface is a tool that staff use for hours under pressure and customers us
 ### 5.2 Non-functional (run at phase gates)
 - **Load:** k6 against staging at 2x the target peak, holding for 30 minutes. Pass = SLOs met and no errors on the order path.
 - **Soak:** 24 hours at average load, watching for leaks.
-- **Chaos:** kill the realtime connection, drop the AI provider, fail over the database in staging.
+- **Chaos:** kill the realtime connection, delay/duplicate webhooks, drop the AI provider, fail over the database in staging.
 - **Security:** dependency audit, ASVS checklist, RLS bypass attempts, then an external penetration test before the pilot.
 - **Backup/restore drill** and rollback drill before launch.
 
@@ -207,7 +206,7 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 - Database project with migration tooling; first schema (`restaurants`, `staff_members`, tenancy base) and RLS test harness.
 - Design tokens, base components, Storybook, visual-regression and axe in CI.
 - Observability wired: Sentry, structured logs, uptime probe, a health endpoint.
-- ADRs for: stack, payment recording model, i18n approach, auth approach, realtime approach.
+- ADRs for: stack, Razorpay Route integration and payment state model, i18n approach, auth approach, realtime approach.
 
 **Exit gate**
 - CI is green from a clean clone in under 10 minutes; a deliberately broken commit is blocked.
@@ -223,6 +222,7 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 - Language support: every menu item and category can hold English, Hindi and Telugu names and descriptions, with a fallback to English where a translation is missing.
 - Image pipeline: upload, resize, modern formats, CDN.
 - Audit log for menu and price changes.
+- Owner payment settings screen (methods on/off, pay-first or prepare-first), built in Phase 4 but the table and permissions are created here.
 
 **Exit gate**
 - Full test suite green; RLS tests cover every new table.
@@ -248,18 +248,19 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 **Build**
 - QR opens a fast menu-first page: categories, search, photos, item detail with modifiers, cart, notes.
 - Table session model (multiple people at one table can add to one order, if the owner enables it).
-- Checkout: tax and service charge displayed correctly; choose UPI (amount-filled link and QR, with an "open UPI app" button on mobile), pay at counter (cash) or pay at counter (card).
-- Owner payment settings: UPI ID and payee name (format-validated), optional QR image upload, methods on/off, "prepare first" versus "pay first" mode.
-- Order state machine plus separate payment state (Section 2.6), status page for the customer, cancellation rules per restaurant.
-- Staff "confirm payment" action with audit trail, and the end-of-day cash-up screen (totals by method, list of unconfirmed orders).
-- Manual refund/cancel entries with required reason.
+- Checkout: tax and service charge displayed correctly; choose pay online (Razorpay), pay at counter (cash) or pay at counter (card).
+- Razorpay Route integration: linked-account onboarding flow for the restaurant, server-side order creation, Razorpay checkout, signed webhook handler, idempotent processing, replay tool, daily reconciliation job.
+- Order state machine plus separate payment state (Section 2.6), customer status page, cancellation and refund rules per restaurant.
+- Staff "confirm payment" for counter/manual payments with audit trail, and the end-of-day cash-up screen.
+- Refunds (online via Razorpay, permission-gated; manual entries for cash/card).
 
 **Exit gate**
-- Every case in the 2.6 test list automated and passing, and each also run by hand.
-- The generated UPI link opens correctly with the right payee and amount in at least three real UPI apps on real phones (you test; I provide the script).
+- Every case in the 2.6 test list is automated and passing against Razorpay **test mode**, and each is also run by hand.
+- Webhook tests: bad signature is rejected, replayed event is a no-op, out-of-order events end in the right state.
+- Real-money test: a few small live payments and one refund through a real linked account, settled to a real bank account and reconciled to the paisa. This needs a Razorpay live account, which is the first spend or approval step on the payments side.
 - Ordering a known item takes under 30 s in timed tests with 5 people who have never seen the app.
 - Load test at 2x peak passes on the order path.
-- A day of simulated orders produces a cash-up total that matches the raw orders to the paisa.
+- A day of simulated orders gives a cash-up and reconciliation total that matches the raw orders to the paisa.
 
 ### Phase 5: Kitchen and owner screens
 **Build**
@@ -305,7 +306,7 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 - A 48-hour staging soak with simulated traffic, then a staged production rollout to one real restaurant while you watch.
 
 ### Phase 8: Pilot and iterate
-- Roll out restaurant by restaurant, starting with a small number, with a daily review of errors, daily cash-up totals versus the restaurant's own receipts and support tickets.
+- Roll out restaurant by restaurant, starting with a small number, with a daily review of errors, daily reconciliation against Razorpay and cash-up totals versus the restaurant's own receipts and support tickets.
 - Measure the metrics in the original plan (average bill lift, order accuracy, adoption, upsell acceptance) against the restaurant's own history.
 - Feed real conversations into the AI evaluation set.
 - Only after stable pilots: scale onboarding, pricing tests, and the next role (Cashier: split bills, receipts; then WhatsApp alerts; then POS integration).
@@ -326,8 +327,9 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Customer claims "paid" but didn't pay; staff confirm the wrong order | High | Claim only flags the order, staff confirm against their own UPI app, audit trail, cash-up screen shows unconfirmed orders, "pay first" mode |
-| Wrong UPI ID saved by the owner | High | Format validation, onboarding test-payment step, preview of the payee name in the customer's UPI app |
+| Payment edge cases lose or duplicate orders (online) | Severe | Server-side amounts, signed webhooks only, idempotency, reconciliation, full failure matrix, real-money test |
+| Counter payments: staff confirm the wrong order or a customer claims paid | High | Staff confirm against their own records, audit trail, cash-up screen lists unconfirmed orders, pay-first mode |
+| Razorpay Route not available or restricted for our use, or restaurants' KYC delayed | High | Confirm with Razorpay early, keep counter and manual UPI paths working, provider interface allows swapping |
 | Free-tier limits or missing backups on real data | High | See Section 11: paid database plan with backups before the first real restaurant |
 | Tenant data leak | Severe | RLS deny-by-default, cross-tenant test suite in CI, pen test |
 | Kitchen misses an order at rush hour | Severe | Realtime + polling, alerts, chaos tests, visible connection state |
@@ -335,7 +337,7 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 | Menu extraction wrong on messy menus | High | Confidence scores, mandatory human review, real-menu test set |
 | Scope creep (adding roles before the Waiter is solid) | High | Phase gates; new roles only after Phase 8 |
 | Cost per order too high | Medium | Caps, per-restaurant cost dashboard, cheapest model that passes evaluation |
-| Regulatory changes (privacy, terms) | Medium | Legal advisor before first real restaurant; ADR log |
+| Regulatory changes (privacy, terms) | Medium | Legal advisor and Razorpay confirmation before first real restaurant; ADR log |
 | Solo-builder bottleneck | Medium | Small vertical slices, strong automation, documented runbooks |
 
 ---
@@ -365,7 +367,7 @@ Each phase lists deliverables, then the **exit gate**. A gate has automated chec
 | # | Decision | Status |
 |---|---|---|
 | 1 | **Backend: Supabase.** Domain logic stays in our own packages (`domain`, `db`) so we can move off later if needed. | Decided |
-| 2 | **Payments: no gateway.** Restaurant's own UPI ID (Hazir generates the amount-filled link/QR; an uploaded QR image is a fallback), plus cash and card at counter, all confirmed by staff (Section 2.6). | Decided |
+| 2 | **Payments: Razorpay Route** (each restaurant a linked account, settles to them), plus cash/card at counter and an optional manual UPI fallback (Section 2.6). Replaces the earlier no-gateway decision. | Decided; Route eligibility to confirm with Razorpay |
 | 3 | **Languages: English, Hindi, Telugu from the first release.** All UI strings go through a translation layer from Phase 1. Native-speaker review before pilot. | Decided |
 | 4 | **Brand and colours: placeholders.** "Hazir" is a working name. The design system uses swappable tokens (name, logo, palette, fonts), so a rebrand is a token change, not a rewrite. Placeholder palette is neutral and passes contrast checks. | Decided |
 | 5 | **Budget: ₹0 for now.** See below. | Decided, with a hard limit noted |
@@ -377,9 +379,11 @@ Development and testing can run on free tiers of Supabase, Cloudflare and GitHub
 
 - **Backups and uptime.** Free database tiers generally don't include point-in-time recovery and may pause when idle. That is fine for building and for a demo with fake data. It is **not** acceptable once a real restaurant's orders are in the database. The plan therefore has one hard rule: **before the first real restaurant goes live, the production database moves to a paid plan with backups, and we run a restore drill.** This is the first point where money is needed, and it's small compared with what a lost day of orders costs a restaurant.
 - **Hosting terms.** Some free hosting plans forbid commercial use. Before launch we confirm that whichever host we use allows a commercial product on the plan we're on, and switch if not.
+- **Payment fees.** Razorpay has no cost until money moves, but payments carry per-transaction fees, and Route may add its own. I haven't verified current rates. We confirm them before Phase 4 and show owners the real numbers. Test mode is free for development.
 - **AI costs.** Free model quotas are small and can change. During development we use them for the evaluation suite, and we keep the per-session and per-restaurant caps from Section 2.5 so that a paid key later can't run away.
 - **Where I need to keep things cheap on purpose:** no extra services we don't need (no separate queue or search service; pg-boss lives in Postgres), and cached menus so the database serves fewer reads.
 
 ### 11.2 Still needed from you (none block Phase 1)
-- A legal advisor for privacy notice, terms of service and confirmation that recording (not processing) payments has no extra obligations for us. Needed before the first real restaurant, so I'll remind you at the end of Phase 6.
+- A legal advisor for the privacy notice, terms of service and any obligations from acting as a platform that onboards restaurants onto Razorpay.
+- A Razorpay account (test mode is enough until Phase 4) and their answers to the Route questions in Section 2.6. Needed before the first real restaurant, so I'll remind you at the end of Phase 6.
 - Access when we reach it: a Supabase account/project for you to own (I'll walk through the steps), a domain if you want one, and a Cloudflare account.
