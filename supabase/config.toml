@@ -1,0 +1,6 @@
+# Supabase CLI configuration. The hosted project is linked with:
+#   supabase link --project-ref kqmihbpjhoymiedjxtsi
+project_id = "kqmihbpjhoymiedjxtsi"
+
+[db]
+major_version = 15
