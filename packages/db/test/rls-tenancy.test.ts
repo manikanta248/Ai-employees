@@ -295,6 +295,7 @@ describe('audit log', () => {
       expect(actions).toEqual([
         'restaurant.created',
         'staff.added',
+        'outlets.created',
         'staff.added',
         'staff.added',
         'staff.role_changed',

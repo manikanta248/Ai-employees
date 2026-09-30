@@ -35,7 +35,28 @@ export async function tenantTables(c: Client): Promise<string[]> {
 }
 
 /** Every tenant table must be registered here AND covered by rls-tenancy.test.ts. */
-export const TENANT_TABLE_REGISTRY = ['audit_log', 'staff_members'];
+export const TENANT_TABLE_REGISTRY = [
+  'audit_log',
+  'dining_tables',
+  'menu_categories',
+  'menu_items',
+  'modifier_groups',
+  'modifiers',
+  'outlets',
+  'payment_settings',
+  'staff_members',
+];
+
+/** Functions in `public` that anonymous visitors may execute. Anything else is a hole. */
+export const ANON_FUNCTION_ALLOWLIST = ['get_public_menu', 'resolve_table'];
+
+export async function functionsAnonCanRun(c: Client): Promise<string[]> {
+  const r = await c.query<{ routine_name: string }>(`
+    select distinct routine_name from information_schema.routine_privileges
+    where routine_schema = 'public' and grantee in ('anon', 'PUBLIC') and privilege_type = 'EXECUTE'
+    order by 1`);
+  return r.rows.map((x) => x.routine_name);
+}
 
 describe('RLS structure (applies to every table, including ones added in later phases)', () => {
   it('has RLS enabled and forced on every public table', async () => {
@@ -56,6 +77,12 @@ describe('RLS structure (applies to every table, including ones added in later p
     await c.end();
   });
 
+  it('lets anonymous visitors run only the two public read functions', async () => {
+    const c = await connect();
+    expect(await functionsAnonCanRun(c)).toEqual([...ANON_FUNCTION_ALLOWLIST].sort());
+    await c.end();
+  });
+
   it('forces every new tenant table to be added to the cross-tenant test registry', async () => {
     const c = await connect();
     const found = await tenantTables(c);
@@ -65,6 +92,13 @@ describe('RLS structure (applies to every table, including ones added in later p
 });
 
 describe('the structural checks actually catch mistakes (tests of the tests)', () => {
+  it('flags a function that anonymous visitors can run', () =>
+    inRollback(async (c) => {
+      await c.query('create function public.oops_fn() returns int language sql as $$ select 1 $$');
+      // Postgres grants EXECUTE to PUBLIC by default, which is exactly the trap.
+      expect(await functionsAnonCanRun(c)).toContain('oops_fn');
+    }));
+
   it('flags a table created without RLS', () =>
     inRollback(async (c) => {
       await actAsSuperuser(c);
