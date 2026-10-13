@@ -44,7 +44,7 @@ Rule: put every model behind one interface, store prices in config, and re-check
 | Shot detection | PySceneDetect or TransNetV2 | local, free |
 | Beat/tempo | librosa or essentia | local, free; core to Indian reel pacing |
 | Auto-reframe to 9:16 | MediaPipe face/pose | keep faces and the couple in frame |
-| Indic speech/captions | **Sarvam** Saarika/Saaras: Rs 30/hour of audio, 22 Indian languages + English **[verified via docs.sarvam.ai]**; alternative: faster-whisper locally | needed for sangeet songs, speeches, Hinglish captions |
+| Indic speech/captions (OPTIONAL, not MVP: only for captions or to avoid cutting through speeches/vows) | **Sarvam** Saarika/Saaras: Rs 30/hour of audio, 22 Indian languages + English **[verified via docs.sarvam.ai]**; alternative: faster-whisper locally | needed for sangeet songs, speeches, Hinglish captions |
 | Browser-side proxies/export | **Mediabunny** (MPL-2.0, WebCodecs, zero deps) **[verified]** | make 720p proxies in the browser to cut upload size |
 | Open motion library alternative | Revideo (MIT, Motion Canvas fork, WebCodecs, ~8 contributors; last commit date unconfirmed) | evaluate vs HyperFrames; check repo health first |
 | Fonts | Noto Sans Devanagari/Telugu/Tamil etc. | test shaping in the renderer early |
@@ -92,3 +92,9 @@ LLM cost per reel is small only if raw video is not sent. Expect compute (render
 3. Revideo repo health and HyperFrames source-video compositing behaviour.
 4. Hoopr (or similar) licence terms, or the decision to go bring-your-own-music.
 5. Legal review: AGPL avoidance, music rights, DPDP compliance.
+
+## 11. Competition check (added 2026-10-13)
+
+Search found existing products, mostly vendor marketing pages that I could not open to judge quality: WeddingEditor.ai (raw footage -> highlight reel/teaser for videographers), FotoOwl (reels from photographers' galleries), Short AI, Revid, Pippit (Indian wedding reel templates), beat-sync apps, plus CapCut/Premiere/Resolve. I found no India-specific auto-editor for sangeet/haldi/baraat footage, but absence in search is not proof.
+
+**Gate before building:** run 5 real Indian event footage sets through WeddingEditor.ai, Short AI and CapCut auto features, and compare with a hand edit. Build only if competitors are clearly worse on Indian footage (pacing, music sync, Indic text, 9:16 framing) and studios say they would switch.
