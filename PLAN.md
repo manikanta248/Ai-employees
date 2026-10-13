@@ -98,3 +98,20 @@ LLM cost per reel is small only if raw video is not sent. Expect compute (render
 Search found existing products, mostly vendor marketing pages that I could not open to judge quality: WeddingEditor.ai (raw footage -> highlight reel/teaser for videographers), FotoOwl (reels from photographers' galleries), Short AI, Revid, Pippit (Indian wedding reel templates), beat-sync apps, plus CapCut/Premiere/Resolve. I found no India-specific auto-editor for sangeet/haldi/baraat footage, but absence in search is not proof.
 
 **Gate before building:** run 5 real Indian event footage sets through WeddingEditor.ai, Short AI and CapCut auto features, and compare with a hand edit. Build only if competitors are clearly worse on Indian footage (pacing, music sync, Indic text, 9:16 framing) and studios say they would switch.
+
+## 12. Learning from internet videos and how to beat competitors (added 2026-10-13)
+
+**Data sources, in order of safety:**
+1. Studio-provided raw footage + their finished edit (best: gives the editor's decisions). Needs written consent.
+2. Licensed/CC footage (e.g. stock sites) as raw test material only.
+3. Public finished reels analysed to extract *style statistics only* (shot lengths, cut-on-beat rate, hook timing, text placement). Do not store or redistribute the videos. Platform ToS generally forbid scraping, and India's AI-training copyright position is unsettled (DPIIT Dec 2025 working paper proposes a mandatory licence, not law; ANI v OpenAI pending). Get legal advice before any scraping.
+
+**Editing principles found (mostly vendor blogs, treat numbers as rough):** hook within first ~1-3s; retention depends on information pace, not just cut speed; motivated cuts; match cuts; J/L cuts; cut on beat; loop-friendly endings; cafe/restaurant: prep close-ups, ambience, reactions, restrained text, appetising grade, pacing matched to venue mood. No rigorous shot-length standards found, so measure them from our own benchmark.
+
+**Ideas to get far ahead (to test, not assumed to work):**
+- Best-of-N editing: render many cheap proxy candidates, score them, pick the best.
+- Motion-to-beat alignment: line up dance spins/dhol hits/pours with music beats using optical flow.
+- Peak detection: crowd energy, smiles, audio swells decide the climax shot.
+- Key-people priority: user tags bride/groom/family once; face clustering keeps them in key shots.
+- Retention loop: with studio consent, read Instagram insights per reel and learn which edits hold viewers.
+- Benchmark: blind A/B vs human editors and competitors on the same footage; ship only what wins.
