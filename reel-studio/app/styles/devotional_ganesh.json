@@ -1,0 +1,34 @@
+{
+  "id": "devotional_ganesh",
+  "name": "Devotional (Ganesh / Navratri / puja)",
+  "description": "Calm, reverent pacing with long holds, golden tone, dissolves and gentle push-ins.",
+  "category": "festival",
+  "default_bpm": 84,
+  "ordering": "chronological",
+  "pacing": [
+    {
+      "until": 0.3,
+      "beats_per_cut": 8
+    },
+    {
+      "until": 0.8,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 8
+    }
+  ],
+  "grade": "golden_devotional",
+  "transitions": {
+    "cut": 0.25,
+    "dissolve": 0.65,
+    "dip": 0.1
+  },
+  "zoom_punch": 0.55,
+  "slow_mo_rate": 0.1,
+  "ramp_rate": 0,
+  "flash_on_drop": false,
+  "title_color": "#FFD27A",
+  "music_hint": "Bhajan/aarti instrumental, 70-90 BPM."
+}

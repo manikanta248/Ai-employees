@@ -1,0 +1,33 @@
+{
+  "id": "cafe_restaurant",
+  "name": "Cafe / restaurant promo",
+  "description": "Appetising and rhythmic: macro close-ups, slow-mo pours, quick beat cuts, restrained text.",
+  "category": "venue",
+  "default_bpm": 108,
+  "ordering": "best_first",
+  "pacing": [
+    {
+      "until": 0.15,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 0.85,
+      "beats_per_cut": 1.5
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 4
+    }
+  ],
+  "grade": "food_appetising",
+  "transitions": {
+    "cut": 0.75,
+    "whip": 0.1,
+    "dissolve": 0.1,
+    "flash": 0.05
+  },
+  "zoom_punch": 0.5,
+  "slow_mo_rate": 0.35,
+  "ramp_rate": 0.1,
+  "music_hint": "Lo-fi / groove, 95-115 BPM."
+}

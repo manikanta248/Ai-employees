@@ -1,0 +1,34 @@
+{
+  "id": "wedding_cinematic",
+  "name": "Wedding cinematic teaser",
+  "description": "Slow emotional teaser: long shots, dissolves, slow motion on emotional moments.",
+  "category": "wedding",
+  "default_bpm": 76,
+  "ordering": "chronological",
+  "pacing": [
+    {
+      "until": 0.25,
+      "beats_per_cut": 8
+    },
+    {
+      "until": 0.75,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 8
+    }
+  ],
+  "grade": "cinematic",
+  "transitions": {
+    "cut": 0.3,
+    "dissolve": 0.6,
+    "dip": 0.1
+  },
+  "zoom_punch": 0.5,
+  "slow_mo_rate": 0.35,
+  "ramp_rate": 0,
+  "flash_on_drop": false,
+  "title_color": "#FFFFFF",
+  "music_hint": "Emotional piano/strings, 70-85 BPM."
+}

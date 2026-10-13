@@ -1,0 +1,37 @@
+{
+  "id": "haldi_mehendi",
+  "name": "Haldi / Mehendi",
+  "description": "Warm, playful and colourful. Medium pacing, soft dissolves, saturated yellow/green look.",
+  "category": "wedding",
+  "default_bpm": 96,
+  "ordering": "chronological",
+  "pacing": [
+    {
+      "until": 0.2,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 0.7,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 0.9,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 4
+    }
+  ],
+  "grade": "warm_festive",
+  "transitions": {
+    "cut": 0.5,
+    "dissolve": 0.3,
+    "flash": 0.05,
+    "whip": 0.15
+  },
+  "zoom_punch": 0.4,
+  "slow_mo_rate": 0.2,
+  "ramp_rate": 0.05,
+  "music_hint": "Light folk-pop, 90-100 BPM."
+}

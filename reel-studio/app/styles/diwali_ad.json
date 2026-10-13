@@ -1,0 +1,35 @@
+{
+  "id": "diwali_ad",
+  "name": "Diwali premium ad",
+  "description": "Premium advert: strong hook, controlled pacing, warm gold look, clear end card.",
+  "category": "ad",
+  "default_bpm": 100,
+  "ordering": "best_first",
+  "pacing": [
+    {
+      "until": 0.2,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 0.8,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 4
+    }
+  ],
+  "grade": "golden_devotional",
+  "transitions": {
+    "cut": 0.5,
+    "dissolve": 0.25,
+    "flash": 0.1,
+    "whip": 0.15
+  },
+  "zoom_punch": 0.6,
+  "slow_mo_rate": 0.2,
+  "ramp_rate": 0.1,
+  "title_color": "#FFE3A3",
+  "title_box": false,
+  "music_hint": "Warm cinematic festive instrumental, 90-110 BPM."
+}

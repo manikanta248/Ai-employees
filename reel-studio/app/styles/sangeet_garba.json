@@ -1,0 +1,38 @@
+{
+  "id": "sangeet_garba",
+  "name": "Sangeet / Garba / dance",
+  "description": "High-energy dance edit: fast cuts on the beat, flashes on accents, speed ramps on spins.",
+  "category": "dance",
+  "default_bpm": 122,
+  "ordering": "energy_build",
+  "pacing": [
+    {
+      "until": 0.12,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 0.4,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 0.92,
+      "beats_per_cut": 1
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 2
+    }
+  ],
+  "grade": "vivid_dance",
+  "transitions": {
+    "cut": 0.55,
+    "flash": 0.2,
+    "whip": 0.2,
+    "dissolve": 0.05
+  },
+  "zoom_punch": 0.7,
+  "slow_mo_rate": 0.2,
+  "ramp_rate": 0.25,
+  "hook_beats": 2,
+  "music_hint": "Garba/dance-pop or EDM remix, 115-130 BPM."
+}

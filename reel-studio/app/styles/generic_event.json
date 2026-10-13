@@ -1,0 +1,37 @@
+{
+  "id": "generic_event",
+  "name": "Generic event highlight",
+  "description": "Balanced hook-build-peak-outro for any celebration.",
+  "category": "festival",
+  "default_bpm": 110,
+  "ordering": "best_first",
+  "pacing": [
+    {
+      "until": 0.2,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 0.55,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 0.9,
+      "beats_per_cut": 1
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 4
+    }
+  ],
+  "grade": "warm_festive",
+  "transitions": {
+    "cut": 0.6,
+    "dissolve": 0.15,
+    "flash": 0.1,
+    "whip": 0.15
+  },
+  "zoom_punch": 0.5,
+  "slow_mo_rate": 0.15,
+  "ramp_rate": 0.1,
+  "music_hint": "Upbeat Bollywood-style or EDM, 100-125 BPM, clear build then drop."
+}

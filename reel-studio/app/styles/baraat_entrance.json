@@ -1,0 +1,39 @@
+{
+  "id": "baraat_entrance",
+  "name": "Baraat entrance",
+  "description": "Cinematic slow build into a loud dhol-and-dance peak. Hero shot first, hard cuts on the dhol hits.",
+  "category": "wedding",
+  "default_bpm": 104,
+  "ordering": "energy_build",
+  "pacing": [
+    {
+      "until": 0.25,
+      "beats_per_cut": 4
+    },
+    {
+      "until": 0.5,
+      "beats_per_cut": 2
+    },
+    {
+      "until": 0.92,
+      "beats_per_cut": 1
+    },
+    {
+      "until": 1,
+      "beats_per_cut": 4
+    }
+  ],
+  "grade": "cinematic",
+  "transitions": {
+    "cut": 0.65,
+    "flash": 0.15,
+    "whip": 0.1,
+    "dissolve": 0.1
+  },
+  "zoom_punch": 0.6,
+  "slow_mo_rate": 0.25,
+  "ramp_rate": 0.15,
+  "hook_beats": 2,
+  "title_color": "#F6D58E",
+  "music_hint": "Dhol/Punjabi or cinematic orchestral build, 100-110 BPM."
+}
